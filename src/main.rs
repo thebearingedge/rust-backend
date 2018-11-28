@@ -2,6 +2,8 @@ use std::env;
 
 #[macro_use]
 extern crate serde_derive;
+#[macro_use]
+extern crate diesel;
 
 use actix_web::server;
 use dotenv::dotenv;
@@ -9,6 +11,7 @@ use listenfd::ListenFd;
 
 mod app;
 mod books;
+mod schema;
 
 fn main() {
     dotenv().ok();

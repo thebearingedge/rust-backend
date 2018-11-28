@@ -2,3 +2,48 @@
 script = [
     "source .env; systemfd --no-pid -s http::${PORT} -- cargo watch -x run"
 ]
+
+[tasks.db-start]
+script = [
+    "docker-compose up -d"
+]
+
+[tasks.db-stop]
+script = [
+    "docker-compose down"
+]
+
+[tasks.db-init]
+script = [
+    "diesel setup"
+]
+
+[tasks.db-make]
+script = [
+    "diesel migration generate ${@}"
+]
+
+[tasks.db-up]
+script = [
+    "diesel migration run"
+]
+
+[tasks.db-down]
+script = [
+    "diesel migration revert"
+]
+
+[tasks.db-redo]
+script = [
+    "diesel redo"
+]
+
+[tasks.db-reset]
+script = [
+    "diesel database reset"
+]
+
+[tasks.db-schema]
+script = [
+    "diesel print-schema"
+]
