@@ -35,7 +35,7 @@ script = [
 
 [tasks.db-redo]
 script = [
-    "diesel redo"
+    "diesel migration redo"
 ]
 
 [tasks.db-reset]
@@ -46,4 +46,9 @@ script = [
 [tasks.db-schema]
 script = [
     "diesel print-schema"
+]
+
+[tasks.db-shell]
+script = [
+    "source .env; psql $DATABASE_URL"
 ]

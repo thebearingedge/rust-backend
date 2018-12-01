@@ -1,27 +1,38 @@
-use std::env;
-
+#![allow(proc_macro_derive_resolution_fallback)]
 #[macro_use]
 extern crate serde_derive;
 #[macro_use]
 extern crate diesel;
 
-use actix_web::server;
+use actix_web::{actix::System, server};
 use dotenv::dotenv;
 use listenfd::ListenFd;
+use num_cpus;
+use std::env;
 
 mod app;
-mod books;
+mod auth;
+mod db;
 mod schema;
 
 fn main() {
     dotenv().ok();
 
-    let mut listen_fd = ListenFd::from_env();
-    let server = server::new(|| app::create());
-    let port = env::var("PORT").expect("PORT environment variable not set");
+    let system = System::new("rust-backend");
+    let db_actor = db::create();
+    let server = server::new(move || {
+        app::create(app::State {
+            db: db_actor.clone(),
+        })
+    });
+    let port = env::var("PORT").expect("PORT not set");
 
-    match listen_fd.take_tcp_listener(0).unwrap() {
-        Some(address) => server.listen(address).run(),
-        _ => server.bind(format!("127.0.0.1:{}", port)).unwrap().run(),
-    }
+    match ListenFd::from_env().take_tcp_listener(0).unwrap() {
+        Some(listener) => server.listen(listener).start(),
+        _ => server.bind(format!("127.0.0.1:{}", port)).unwrap().start(),
+    };
+
+    println!("Listening on port {}", port);
+
+    system.run();
 }
