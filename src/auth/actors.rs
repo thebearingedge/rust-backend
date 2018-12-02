@@ -1,4 +1,4 @@
-use super::models::{NewUser, User};
+use super::models::{ActiveUser, AuthenticatedUser, CreatedUser, NewUser};
 use crate::db::DbActor;
 use actix_web::{
     actix::{Handler, Message},
@@ -16,11 +16,11 @@ pub struct CreateUser {
 }
 
 impl Message for CreateUser {
-    type Result = Result<User, Error>;
+    type Result = Result<CreatedUser, Error>;
 }
 
 impl Handler<CreateUser> for DbActor {
-    type Result = Result<User, Error>;
+    type Result = Result<CreatedUser, Error>;
 
     fn handle(
         &mut self,
@@ -29,7 +29,7 @@ impl Handler<CreateUser> for DbActor {
     ) -> Self::Result {
         use crate::schema::users::dsl::*;
 
-        let conn = self.0.get().unwrap();
+        let conn = self.conn.get().unwrap();
         let id = Uuid::new_v4();
         let hashed_password = bcrypt::hash(&message.password, 10).unwrap();
         let new_user = NewUser {
@@ -41,7 +41,53 @@ impl Handler<CreateUser> for DbActor {
 
         diesel::insert_into(users)
             .values(&new_user)
-            .get_result::<User>(&conn)
-            .map_err(|_| error::ErrorInternalServerError(""))
+            .returning((user_id, name, email, created_at, updated_at))
+            .get_result::<CreatedUser>(&conn)
+            .map_err(error::ErrorInternalServerError)
+    }
+}
+
+#[derive(Deserialize)]
+pub struct Credentials {
+    pub email: String,
+    pub password: String,
+}
+
+impl Message for Credentials {
+    type Result = Result<AuthenticatedUser, Error>;
+}
+
+impl Handler<Credentials> for DbActor {
+    type Result = Result<AuthenticatedUser, Error>;
+
+    fn handle(
+        &mut self,
+        payload: Credentials,
+        _: &mut Self::Context,
+    ) -> Self::Result {
+        use crate::schema::users::dsl::*;
+
+        let conn = self.conn.get().unwrap();
+
+        users
+            .select((user_id, email, password))
+            .filter(email.eq(&payload.email))
+            .filter(password.is_not_null())
+            .first::<ActiveUser>(&conn)
+            .optional()
+            .map_err(error::ErrorInternalServerError)?
+            .and_then(|user| {
+                let unhashed = &payload.password;
+                let hashed = &user.password.unwrap();
+                let is_valid = bcrypt::verify(unhashed, hashed).unwrap();
+                if !is_valid {
+                    return None;
+                }
+                Some(AuthenticatedUser {
+                    user_id: user.user_id,
+                    email: user.email,
+                })
+            })
+            .ok_or(error::ErrorUnauthorized(""))
     }
 }

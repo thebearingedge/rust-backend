@@ -5,7 +5,9 @@ use diesel::{
 };
 use std::env;
 
-pub struct DbActor(pub Pool<ConnectionManager<PgConnection>>);
+pub struct DbActor {
+    pub conn: Pool<ConnectionManager<PgConnection>>,
+}
 
 impl Actor for DbActor {
     type Context = SyncContext<Self>;
@@ -16,5 +18,7 @@ pub fn create() -> Addr<DbActor> {
     let db_pool = Pool::builder()
         .build(ConnectionManager::<PgConnection>::new(db_url))
         .expect("Failed to create database connection pool.");
-    SyncArbiter::start(num_cpus::get(), move || DbActor(db_pool.clone()))
+    SyncArbiter::start(num_cpus::get(), move || DbActor {
+        conn: db_pool.clone(),
+    })
 }

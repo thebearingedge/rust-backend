@@ -4,12 +4,10 @@ use uuid::Uuid;
 
 #[derive(Serialize, Queryable)]
 #[serde(rename_all = "camelCase")]
-pub struct User {
+pub struct CreatedUser {
     pub user_id: Uuid,
     pub name: String,
     pub email: String,
-    #[serde(skip_serializing)]
-    pub password: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -21,4 +19,18 @@ pub struct NewUser {
     pub name: String,
     pub email: String,
     pub password: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AuthenticatedUser {
+    pub user_id: Uuid,
+    pub email: String,
+}
+
+#[derive(Queryable)]
+pub struct ActiveUser {
+    pub user_id: Uuid,
+    pub email: String,
+    pub password: Option<String>,
 }

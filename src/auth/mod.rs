@@ -15,7 +15,22 @@ pub fn sign_up(
         .from_err()
         .and_then(|res| match res {
             Ok(user) => Ok(HttpResponse::Created().json(user)),
-            Err(_) => Ok(HttpResponse::InternalServerError().into()),
+            Err(error) => Ok(HttpResponse::from_error(error)),
+        })
+        .responder()
+}
+
+pub fn sign_in(
+    state: State<app::State>,
+    credentials: Json<actors::Credentials>,
+) -> FutureResponse<HttpResponse> {
+    state
+        .db
+        .send(credentials.into_inner())
+        .from_err()
+        .and_then(|res| match res {
+            Ok(claims) => Ok(HttpResponse::Created().json(claims)),
+            Err(error) => Ok(HttpResponse::from_error(error)),
         })
         .responder()
 }

@@ -8,8 +8,12 @@ pub struct State {
 
 pub fn create(state: State) -> App<State> {
     App::with_state(state).scope("/auth", |scope| {
-        scope.resource("/sign-up", |resource| {
-            resource.method(Method::POST).with(auth::sign_up)
-        })
+        scope
+            .resource("/sign-up", |resource| {
+                resource.method(Method::POST).with(auth::sign_up)
+            })
+            .resource("/sign-in", |resource| {
+                resource.method(Method::POST).with(auth::sign_in)
+            })
     })
 }
