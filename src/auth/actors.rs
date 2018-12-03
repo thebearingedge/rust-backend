@@ -65,13 +65,14 @@ impl Handler<Credentials> for DbActor {
         payload: Credentials,
         _: &mut Self::Context,
     ) -> Self::Result {
+        use crate::db::functions::*;
         use crate::schema::users::dsl::*;
 
         let conn = self.conn.get().unwrap();
 
         users
             .select((user_id, email, password))
-            .filter(email.eq(&payload.email))
+            .filter(lower(email).eq(&payload.email.to_lowercase()))
             .filter(password.is_not_null())
             .first::<ActiveUser>(&conn)
             .optional()
