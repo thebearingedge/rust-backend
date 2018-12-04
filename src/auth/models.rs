@@ -21,16 +21,21 @@ pub struct NewUser {
     pub password: String,
 }
 
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct AuthenticatedUser {
-    pub user_id: Uuid,
-    pub email: String,
-}
-
 #[derive(Queryable)]
 pub struct ActiveUser {
     pub user_id: Uuid,
     pub email: String,
     pub password: Option<String>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Claims {
+    pub user_id: Uuid,
+    pub email: String,
+}
+
+#[derive(Serialize)]
+pub struct Token {
+    pub token: String,
 }

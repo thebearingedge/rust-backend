@@ -1,4 +1,4 @@
-use super::models::{ActiveUser, AuthenticatedUser, CreatedUser, NewUser};
+use super::models::{ActiveUser, Claims, CreatedUser, NewUser};
 use crate::db::DbActor;
 use actix_web::{
     actix::{Handler, Message},
@@ -24,18 +24,18 @@ impl Handler<CreateUser> for DbActor {
 
     fn handle(
         &mut self,
-        message: CreateUser,
+        payload: CreateUser,
         _: &mut Self::Context,
     ) -> Self::Result {
         use crate::schema::users::dsl::*;
 
         let conn = self.conn.get().unwrap();
         let id = Uuid::new_v4();
-        let hashed_password = bcrypt::hash(&message.password, 10).unwrap();
+        let hashed_password = bcrypt::hash(&payload.password, 10).unwrap();
         let new_user = NewUser {
             user_id: id,
-            name: message.name,
-            email: message.email,
+            name: payload.name,
+            email: payload.email,
             password: hashed_password,
         };
 
@@ -54,11 +54,11 @@ pub struct Credentials {
 }
 
 impl Message for Credentials {
-    type Result = Result<AuthenticatedUser, Error>;
+    type Result = Result<Claims, Error>;
 }
 
 impl Handler<Credentials> for DbActor {
-    type Result = Result<AuthenticatedUser, Error>;
+    type Result = Result<Claims, Error>;
 
     fn handle(
         &mut self,
@@ -84,7 +84,7 @@ impl Handler<Credentials> for DbActor {
                 if !is_valid {
                     return None;
                 }
-                Some(AuthenticatedUser {
+                Some(Claims {
                     user_id: user.user_id,
                     email: user.email,
                 })
