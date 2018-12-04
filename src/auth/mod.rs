@@ -6,10 +6,11 @@ use std::env;
 
 mod handlers;
 mod models;
+mod users;
 
 pub fn sign_up(
     state: State<app::State>,
-    user: Json<handlers::CreateUser>,
+    user: Json<models::SignUp>,
 ) -> FutureResponse<HttpResponse> {
     state
         .db
@@ -22,17 +23,22 @@ pub fn sign_up(
         .responder()
 }
 
-fn create_token(payload: models::Claims) -> models::Token {
+#[derive(Serialize)]
+pub struct Token {
+    pub token: String,
+}
+
+fn create_token(payload: models::Claims) -> self::Token {
     let token_secret = env::var("TOKEN_SECRET").expect("TOKEN_SECRET not set");
     let token =
         jwt::encode(&jwt::Header::default(), &payload, &token_secret.as_ref())
             .unwrap();
-    models::Token { token }
+    self::Token { token }
 }
 
 pub fn sign_in(
     state: State<app::State>,
-    credentials: Json<handlers::Credentials>,
+    credentials: Json<models::SignIn>,
 ) -> FutureResponse<HttpResponse> {
     state
         .db

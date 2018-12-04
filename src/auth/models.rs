@@ -35,7 +35,15 @@ pub struct Claims {
     pub email: String,
 }
 
-#[derive(Serialize)]
-pub struct Token {
-    pub token: String,
+#[derive(Deserialize)]
+pub struct SignIn {
+    pub email: String,
+    pub password: String,
+}
+
+#[derive(Deserialize)]
+pub struct SignUp {
+    pub name: String,
+    pub email: String,
+    pub password: String,
 }
