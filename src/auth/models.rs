@@ -15,7 +15,6 @@ pub struct CreatedUser {
 #[derive(Insertable)]
 #[table_name = "users"]
 pub struct NewUser {
-    pub user_id: Uuid,
     pub name: String,
     pub email: String,
     pub password: String,

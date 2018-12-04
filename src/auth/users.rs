@@ -1,7 +1,6 @@
 use super::models;
 use bcrypt;
 use diesel::{pg::PgConnection, prelude::*, result::Error};
-use uuid::Uuid;
 
 pub fn create(
     conn: &PgConnection,
@@ -9,11 +8,9 @@ pub fn create(
 ) -> QueryResult<models::CreatedUser> {
     use crate::schema::users::dsl::*;
 
-    let id = Uuid::new_v4();
     let hashed_password =
         bcrypt::hash(&payload.password, bcrypt::DEFAULT_COST).unwrap();
     let new_user = models::NewUser {
-        user_id: id,
         name: payload.name,
         email: payload.email,
         password: hashed_password,
