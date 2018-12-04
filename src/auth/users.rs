@@ -10,7 +10,8 @@ pub fn create(
     use crate::schema::users::dsl::*;
 
     let id = Uuid::new_v4();
-    let hashed_password = bcrypt::hash(&payload.password, 10).unwrap();
+    let hashed_password =
+        bcrypt::hash(&payload.password, bcrypt::DEFAULT_COST).unwrap();
     let new_user = models::NewUser {
         user_id: id,
         name: payload.name,
