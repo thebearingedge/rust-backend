@@ -4,23 +4,25 @@ extern crate diesel;
 #[macro_use]
 extern crate serde_derive;
 
-use actix_web::{actix::System, server};
+use actix_web::{actix::System, server::HttpServer};
 use dotenv::dotenv;
+use env_logger;
 use listenfd::ListenFd;
-use num_cpus;
 use std::env;
 
 mod app;
 mod auth;
 mod db;
+mod error;
 mod schema;
 
 fn main() {
     dotenv().ok();
+    env_logger::init();
 
     let system = System::new("rust-backend");
     let db_actor = db::create();
-    let server = server::new(move || {
+    let server = HttpServer::new(move || {
         app::create(app::State {
             db: db_actor.clone(),
         })

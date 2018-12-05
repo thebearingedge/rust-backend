@@ -1,10 +1,7 @@
 use super::{models, users};
 use crate::db::DbActor;
-use actix_web::{
-    actix::{Handler, Message},
-    error, Error,
-};
-use bcrypt;
+use crate::error::Error;
+use actix_web::actix::{Handler, Message};
 
 impl Message for models::SignUp {
     type Result = Result<models::CreatedUser, Error>;
@@ -20,10 +17,10 @@ impl Handler<models::SignUp> for DbActor {
     ) -> Self::Result {
         self.conn
             .get()
-            .map_err(error::ErrorServiceUnavailable)
+            .map_err(|_| Error::service_unavailable())
             .and_then(|conn| {
                 users::create(&conn, payload)
-                    .map_err(error::ErrorInternalServerError)
+                    .map_err(|_| Error::bad_implementation())
             })
     }
 }
@@ -42,10 +39,10 @@ impl Handler<models::SignIn> for DbActor {
     ) -> Self::Result {
         self.conn
             .get()
-            .map_err(error::ErrorServiceUnavailable)
+            .map_err(|_| Error::service_unavailable())
             .and_then(|conn| {
                 users::authenticate(&conn, payload)
-                    .map_err(error::ErrorUnauthorized)
+                    .map_err(|_| Error::unauthorized("Invalid login."))
             })
     }
 }

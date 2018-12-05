@@ -38,6 +38,7 @@ pub fn authenticate(
             let unhashed = &payload.password;
             let hashed = &user.password.unwrap();
             let is_valid = bcrypt::verify(unhashed, hashed).unwrap();
+
             if !is_valid {
                 return Err(Error::NotFound);
             }

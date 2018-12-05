@@ -1,5 +1,7 @@
 use crate::app;
-use actix_web::{AsyncResponder, FutureResponse, HttpResponse, Json, State};
+use actix_web::{
+    AsyncResponder, FutureResponse, HttpResponse, Json, ResponseError, State,
+};
 use futures::future::Future;
 use jsonwebtoken as jwt;
 use std::env;
@@ -10,14 +12,14 @@ mod users;
 
 pub fn sign_up(
     state: State<app::State>,
-    Json(user): Json<models::SignUp>,
+    Json(payload): Json<models::SignUp>,
 ) -> FutureResponse<HttpResponse> {
     state
         .db
-        .send(user)
+        .send(payload)
         .and_then(|res| match res {
             Ok(user) => Ok(HttpResponse::Created().json(user)),
-            Err(error) => Ok(HttpResponse::from_error(error)),
+            Err(error) => Ok(error.error_response()),
         })
         .from_err()
         .responder()
@@ -33,19 +35,20 @@ fn create_token(payload: models::Claims) -> self::Token {
     let token =
         jwt::encode(&jwt::Header::default(), &payload, &token_secret.as_ref())
             .unwrap();
+
     self::Token { token }
 }
 
 pub fn sign_in(
     state: State<app::State>,
-    Json(credentials): Json<models::SignIn>,
+    Json(payload): Json<models::SignIn>,
 ) -> FutureResponse<HttpResponse> {
     state
         .db
-        .send(credentials)
+        .send(payload)
         .and_then(|res| match res.map(create_token) {
             Ok(token) => Ok(HttpResponse::Created().json(token)),
-            Err(error) => Ok(HttpResponse::from_error(error)),
+            Err(error) => Ok(error.error_response()),
         })
         .from_err()
         .responder()
