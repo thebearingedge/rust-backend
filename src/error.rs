@@ -1,7 +1,6 @@
 use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
 use failure::Fail;
 use serde::ser::{Serialize, SerializeStruct, Serializer};
-use serde_json;
 use std::fmt;
 
 #[derive(Fail, Debug)]
@@ -34,7 +33,7 @@ impl ResponseError for Error {
     fn error_response(&self) -> HttpResponse {
         HttpResponse::build(self.status)
             .content_type("application/json")
-            .body(serde_json::to_string(self).unwrap())
+            .json(self)
     }
 }
 
