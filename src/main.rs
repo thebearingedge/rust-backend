@@ -1,8 +1,8 @@
 #![allow(proc_macro_derive_resolution_fallback)]
 #[macro_use]
-extern crate serde_derive;
-#[macro_use]
 extern crate diesel;
+#[macro_use]
+extern crate serde_derive;
 
 use actix_web::{actix::System, server};
 use dotenv::dotenv;

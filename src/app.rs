@@ -1,5 +1,4 @@
-use crate::auth;
-use crate::db::DbActor;
+use crate::{auth, db::DbActor};
 use actix_web::{actix::Addr, http::Method, App};
 
 pub struct State {

@@ -1,5 +1,4 @@
-use super::models;
-use super::users;
+use super::{models, users};
 use crate::db::DbActor;
 use actix_web::{
     actix::{Handler, Message},

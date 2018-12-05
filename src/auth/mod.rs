@@ -10,21 +10,21 @@ mod users;
 
 pub fn sign_up(
     state: State<app::State>,
-    user: Json<models::SignUp>,
+    Json(user): Json<models::SignUp>,
 ) -> FutureResponse<HttpResponse> {
     state
         .db
-        .send(user.into_inner())
-        .from_err()
+        .send(user)
         .and_then(|res| match res {
             Ok(user) => Ok(HttpResponse::Created().json(user)),
             Err(error) => Ok(HttpResponse::from_error(error)),
         })
+        .from_err()
         .responder()
 }
 
 #[derive(Serialize)]
-pub struct Token {
+struct Token {
     pub token: String,
 }
 
@@ -38,15 +38,15 @@ fn create_token(payload: models::Claims) -> self::Token {
 
 pub fn sign_in(
     state: State<app::State>,
-    credentials: Json<models::SignIn>,
+    Json(credentials): Json<models::SignIn>,
 ) -> FutureResponse<HttpResponse> {
     state
         .db
-        .send(credentials.into_inner())
-        .from_err()
+        .send(credentials)
         .and_then(|res| match res.map(create_token) {
             Ok(token) => Ok(HttpResponse::Created().json(token)),
             Err(error) => Ok(HttpResponse::from_error(error)),
         })
+        .from_err()
         .responder()
 }
