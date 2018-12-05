@@ -7,12 +7,11 @@ use jsonwebtoken as jwt;
 use std::env;
 
 mod handlers;
-mod models;
 mod users;
 
 pub fn sign_up(
     state: State<app::State>,
-    Json(payload): Json<models::SignUp>,
+    Json(payload): Json<users::SignUp>,
 ) -> FutureResponse<HttpResponse> {
     state
         .db
@@ -30,7 +29,7 @@ struct Token {
     pub token: String,
 }
 
-fn create_token(payload: models::Claims) -> self::Token {
+fn create_token(payload: users::Claims) -> self::Token {
     let token_secret = env::var("TOKEN_SECRET").expect("TOKEN_SECRET not set");
     let token =
         jwt::encode(&jwt::Header::default(), &payload, &token_secret.as_ref())
@@ -41,7 +40,7 @@ fn create_token(payload: models::Claims) -> self::Token {
 
 pub fn sign_in(
     state: State<app::State>,
-    Json(payload): Json<models::SignIn>,
+    Json(payload): Json<users::SignIn>,
 ) -> FutureResponse<HttpResponse> {
     state
         .db

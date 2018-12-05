@@ -1,18 +1,18 @@
-use super::{models, users};
+use super::users;
 use crate::db::DbActor;
 use crate::error::Error;
 use actix_web::actix::{Handler, Message};
 
-impl Message for models::SignUp {
-    type Result = Result<models::CreatedUser, Error>;
+impl Message for users::SignUp {
+    type Result = Result<users::CreatedUser, Error>;
 }
 
-impl Handler<models::SignUp> for DbActor {
-    type Result = Result<models::CreatedUser, Error>;
+impl Handler<users::SignUp> for DbActor {
+    type Result = Result<users::CreatedUser, Error>;
 
     fn handle(
         &mut self,
-        payload: models::SignUp,
+        payload: users::SignUp,
         _: &mut Self::Context,
     ) -> Self::Result {
         self.conn
@@ -25,16 +25,16 @@ impl Handler<models::SignUp> for DbActor {
     }
 }
 
-impl Message for models::SignIn {
-    type Result = Result<models::Claims, Error>;
+impl Message for users::SignIn {
+    type Result = Result<users::Claims, Error>;
 }
 
-impl Handler<models::SignIn> for DbActor {
-    type Result = Result<models::Claims, Error>;
+impl Handler<users::SignIn> for DbActor {
+    type Result = Result<users::Claims, Error>;
 
     fn handle(
         &mut self,
-        payload: models::SignIn,
+        payload: users::SignIn,
         _: &mut Self::Context,
     ) -> Self::Result {
         self.conn
