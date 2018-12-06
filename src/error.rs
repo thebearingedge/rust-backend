@@ -1,22 +1,25 @@
 use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
 use serde::ser::{Serialize, SerializeStruct, Serializer};
-use std::fmt;
+use std::{
+    fmt::{self, Debug, Display},
+    result,
+};
 
-#[derive(Fail, Debug)]
+#[derive(Debug, Fail)]
 pub struct Error {
     status: StatusCode,
     error: String,
     message: String,
 }
 
-impl fmt::Display for Error {
+impl Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:#?}", self)
+        write!(f, "{:?}", self)
     }
 }
 
 impl Serialize for Error {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    fn serialize<S>(&self, serializer: S) -> result::Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
@@ -34,29 +37,29 @@ impl ResponseError for Error {
     }
 }
 
-impl Error {
-    pub fn unauthorized(message: &str) -> Self {
-        Error {
-            status: StatusCode::UNAUTHORIZED,
-            error: "Unauthorized".to_owned(),
-            message: message.to_owned(),
-        }
-    }
-
-    pub fn bad_implementation() -> Self {
-        Error {
-            status: StatusCode::INTERNAL_SERVER_ERROR,
-            error: "Internal Server Error".to_owned(),
-            message: "An unexpected Error occurred.".to_owned(),
-        }
-    }
-
-    pub fn service_unavailable() -> Self {
-        Error {
-            status: StatusCode::SERVICE_UNAVAILABLE,
-            error: "Service Unavailable".to_owned(),
-            message: "The server is unable to handle the request at this time."
-                .to_owned(),
-        }
+pub fn unauthorized(message: &str) -> Error {
+    Error {
+        status: StatusCode::UNAUTHORIZED,
+        error: "Unauthorized".to_owned(),
+        message: message.to_owned(),
     }
 }
+
+pub fn bad_implementation(_err: impl Display+Debug) -> Error {
+    Error {
+        status: StatusCode::INTERNAL_SERVER_ERROR,
+        error: "Internal Server Error".to_owned(),
+        message: "An unexpected Error occurred.".to_owned(),
+    }
+}
+
+pub fn service_unavailable(_err: impl Display+Debug) -> Error {
+    Error {
+        status: StatusCode::SERVICE_UNAVAILABLE,
+        error: "Service Unavailable".to_owned(),
+        message: "The server is unable to handle the request at this time."
+            .to_owned(),
+    }
+}
+
+pub type Result<T> = result::Result<T, Error>;

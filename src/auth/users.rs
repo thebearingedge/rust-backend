@@ -1,7 +1,10 @@
-use crate::schema::users;
+use crate::{
+    error::{self, Result},
+    schema::users,
+};
 use bcrypt;
 use chrono::{offset::Utc, DateTime};
-use diesel::{pg::PgConnection, prelude::*, result::Error};
+use diesel::{pg::PgConnection, prelude::*};
 use uuid::Uuid;
 
 #[derive(Serialize, Queryable)]
@@ -49,10 +52,7 @@ pub struct SignUp {
     pub password: String,
 }
 
-pub fn create(
-    conn: &PgConnection,
-    payload: SignUp,
-) -> QueryResult<CreatedUser> {
+pub fn create(conn: &PgConnection, payload: SignUp) -> Result<CreatedUser> {
     use crate::schema::users::dsl::*;
 
     let hashed_password =
@@ -67,12 +67,10 @@ pub fn create(
         .values(&new_user)
         .returning((user_id, name, email, created_at, updated_at))
         .get_result::<CreatedUser>(conn)
+        .map_err(error::bad_implementation)
 }
 
-pub fn authenticate(
-    conn: &PgConnection,
-    payload: SignIn,
-) -> QueryResult<Claims> {
+pub fn authenticate(conn: &PgConnection, payload: SignIn) -> Result<Claims> {
     use crate::db::functions::*;
     use crate::schema::users::dsl::*;
 
@@ -81,13 +79,20 @@ pub fn authenticate(
         .filter(lower(email).eq(&payload.email.to_lowercase()))
         .filter(password.is_not_null())
         .first::<ActiveUser>(conn)
-        .and_then(|user| {
+        .optional()
+        .map_err(error::bad_implementation)
+        .and_then(|found| {
+            if found.is_none() {
+                return Err(error::unauthorized("Invalid login."));
+            }
+
+            let user = found.unwrap();
             let unhashed = &payload.password;
             let hashed = &user.password.unwrap();
             let is_valid = bcrypt::verify(unhashed, hashed).unwrap();
 
             if !is_valid {
-                return Err(Error::NotFound);
+                return Err(error::unauthorized("Invalid login."));
             }
             Ok(Claims {
                 user_id: user.user_id,
