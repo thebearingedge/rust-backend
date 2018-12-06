@@ -1,6 +1,5 @@
 use super::users;
-use crate::db::DbActor;
-use crate::error::Error;
+use crate::{db::DbActor, error::Error};
 use actix_web::actix::{Handler, Message};
 
 impl Message for users::SignUp {

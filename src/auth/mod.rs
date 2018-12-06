@@ -29,13 +29,13 @@ struct Token {
     pub token: String,
 }
 
-fn create_token(payload: users::Claims) -> self::Token {
+fn create_token(claims: users::Claims) -> Token {
     let token_secret = env::var("TOKEN_SECRET").expect("TOKEN_SECRET not set");
     let token =
-        jwt::encode(&jwt::Header::default(), &payload, &token_secret.as_ref())
+        jwt::encode(&jwt::Header::default(), &claims, &token_secret.as_ref())
             .unwrap();
 
-    self::Token { token }
+    Token { token }
 }
 
 pub fn sign_in(

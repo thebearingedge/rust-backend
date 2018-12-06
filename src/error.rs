@@ -1,5 +1,4 @@
 use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
-use failure::Fail;
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 use std::fmt;
 
@@ -31,9 +30,7 @@ impl Serialize for Error {
 
 impl ResponseError for Error {
     fn error_response(&self) -> HttpResponse {
-        HttpResponse::build(self.status)
-            .content_type("application/json")
-            .json(self)
+        HttpResponse::build(self.status).json(self)
     }
 }
 
@@ -56,7 +53,7 @@ impl Error {
 
     pub fn service_unavailable() -> Self {
         Error {
-            status: StatusCode::INTERNAL_SERVER_ERROR,
+            status: StatusCode::SERVICE_UNAVAILABLE,
             error: "Service Unavailable".to_owned(),
             message: "The server is unable to handle the request at this time."
                 .to_owned(),

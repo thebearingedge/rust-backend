@@ -13,11 +13,12 @@ impl Actor for DbActor {
     type Context = SyncContext<Self>;
 }
 
-pub fn create() -> Addr<DbActor> {
+pub fn get_addr() -> Addr<DbActor> {
     let db_url = env::var("DATABASE_URL").expect("DATABASE_URL not set");
     let db_pool = Pool::builder()
         .build(ConnectionManager::<PgConnection>::new(db_url))
         .expect("Failed to create database connection pool.");
+
     SyncArbiter::start(num_cpus::get(), move || DbActor {
         conn: db_pool.clone(),
     })

@@ -2,6 +2,8 @@
 #[macro_use]
 extern crate diesel;
 #[macro_use]
+extern crate failure;
+#[macro_use]
 extern crate serde_derive;
 
 use actix_web::{actix::System, server::HttpServer};
@@ -21,10 +23,10 @@ fn main() {
     env_logger::init();
 
     let system = System::new("rust-backend");
-    let db_actor = db::create();
+    let db_addr = db::get_addr();
     let server = HttpServer::new(move || {
         app::create(app::State {
-            db: db_actor.clone(),
+            db: db_addr.clone(),
         })
     });
     let port = env::var("PORT").expect("PORT not set");
