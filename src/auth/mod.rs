@@ -29,8 +29,12 @@ struct Token {
     pub token: String,
 }
 
+lazy_static! {
+    static ref token_secret: String =
+        env::var("TOKEN_SECRET").expect("TOKEN_SECRET not set");
+}
+
 fn create_token(claims: users::Claims) -> Token {
-    let token_secret = env::var("TOKEN_SECRET").expect("TOKEN_SECRET not set");
     let token =
         jwt::encode(&jwt::Header::default(), &claims, &token_secret.as_ref())
             .unwrap();

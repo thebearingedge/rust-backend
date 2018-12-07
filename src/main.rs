@@ -4,6 +4,8 @@ extern crate diesel;
 #[macro_use]
 extern crate failure;
 #[macro_use]
+extern crate lazy_static;
+#[macro_use]
 extern crate serde_derive;
 
 use actix_web::{actix::System, server::HttpServer};
@@ -18,6 +20,10 @@ mod db;
 mod error;
 mod schema;
 
+lazy_static! {
+    static ref port: String = env::var("PORT").expect("PORT not set");
+}
+
 fn main() {
     dotenv().ok();
     env_logger::init();
@@ -29,14 +35,13 @@ fn main() {
             db: db_addr.clone(),
         })
     });
-    let port = env::var("PORT").expect("PORT not set");
 
     match ListenFd::from_env().take_tcp_listener(0).unwrap() {
         Some(listener) => server.listen(listener).start(),
-        _ => server.bind(format!("127.0.0.1:{}", port)).unwrap().start(),
+        _ => server.bind(format!("127.0.0.1:{}", *port)).unwrap().start(),
     };
 
-    println!("Listening on port {}", port);
+    println!("Listening on port {}", *port);
 
     system.run();
 }
