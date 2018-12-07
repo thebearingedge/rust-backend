@@ -8,8 +8,8 @@ use std::{
 #[derive(Debug, Fail)]
 pub struct Error {
     status: StatusCode,
-    error: String,
-    message: String,
+    error: &'static str,
+    message: &'static str,
 }
 
 impl Display for Error {
@@ -37,28 +37,27 @@ impl ResponseError for Error {
     }
 }
 
-pub fn unauthorized(message: &str) -> Error {
+pub fn unauthorized(message: &'static str) -> Error {
     Error {
         status: StatusCode::UNAUTHORIZED,
-        error: "Unauthorized".to_owned(),
-        message: message.to_owned(),
+        error: "Unauthorized",
+        message,
     }
 }
 
 pub fn bad_implementation(_err: impl Display+Debug) -> Error {
     Error {
         status: StatusCode::INTERNAL_SERVER_ERROR,
-        error: "Internal Server Error".to_owned(),
-        message: "An unexpected Error occurred.".to_owned(),
+        error: "Internal Server Error",
+        message: "An unexpected Error occurred.",
     }
 }
 
 pub fn service_unavailable(_err: impl Display+Debug) -> Error {
     Error {
         status: StatusCode::SERVICE_UNAVAILABLE,
-        error: "Service Unavailable".to_owned(),
-        message: "The server is unable to handle the request at this time."
-            .to_owned(),
+        error: "Service Unavailable",
+        message: "The server is currently unable to handle the request.",
     }
 }
 
