@@ -19,7 +19,7 @@ impl Handler<users::SignUp> for DbActor {
     ) -> Self::Result {
         self.conn
             .get()
-            .map_err(error::service_unavailable)
+            .map_err(|err| error::service_unavailable(err.into()))
             .and_then(|conn| users::create(&conn, payload))
     }
 }
@@ -38,7 +38,7 @@ impl Handler<users::SignIn> for DbActor {
     ) -> Self::Result {
         self.conn
             .get()
-            .map_err(error::service_unavailable)
+            .map_err(|err| error::service_unavailable(err.into()))
             .and_then(|conn| users::authenticate(&conn, payload))
     }
 }

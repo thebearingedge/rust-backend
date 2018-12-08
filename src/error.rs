@@ -1,7 +1,8 @@
 use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
+use failure;
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 use std::{
-    fmt::{self, Debug, Display},
+    fmt::{self, Display},
     result,
 };
 
@@ -10,6 +11,7 @@ pub struct Error {
     status: StatusCode,
     error: &'static str,
     message: &'static str,
+    cause: Option<failure::Error>,
 }
 
 impl Display for Error {
@@ -42,19 +44,22 @@ pub fn unauthorized(message: &'static str) -> Error {
         status: StatusCode::UNAUTHORIZED,
         error: "Unauthorized",
         message,
+        cause: None,
     }
 }
 
-pub fn bad_implementation(_err: impl Display+Debug) -> Error {
+pub fn bad_implementation(err: failure::Error) -> Error {
     Error {
+        cause: Some(err),
         status: StatusCode::INTERNAL_SERVER_ERROR,
         error: "Internal Server Error",
         message: "An unexpected Error occurred.",
     }
 }
 
-pub fn service_unavailable(_err: impl Display+Debug) -> Error {
+pub fn service_unavailable(err: failure::Error) -> Error {
     Error {
+        cause: Some(err),
         status: StatusCode::SERVICE_UNAVAILABLE,
         error: "Service Unavailable",
         message: "The server is currently unable to handle the request.",

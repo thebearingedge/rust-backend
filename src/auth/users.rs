@@ -67,7 +67,7 @@ pub fn create(conn: &PgConnection, payload: SignUp) -> AppResult<CreatedUser> {
         .values(&new_user)
         .returning((user_id, name, email, created_at, updated_at))
         .get_result::<CreatedUser>(conn)
-        .map_err(error::bad_implementation)
+        .map_err(|err| error::bad_implementation(err.into()))
 }
 
 pub fn authenticate(conn: &PgConnection, payload: SignIn) -> AppResult<Claims> {
@@ -80,7 +80,7 @@ pub fn authenticate(conn: &PgConnection, payload: SignIn) -> AppResult<Claims> {
         .filter(password.is_not_null())
         .first::<ActiveUser>(conn)
         .optional()
-        .map_err(error::bad_implementation)
+        .map_err(|err| error::bad_implementation(err.into()))
         .and_then(|found| {
             if found.is_none() {
                 return Err(error::unauthorized("Invalid login."));
