@@ -41,6 +41,14 @@ impl ResponseError for Error {
     }
 }
 
+pub fn bad_request(message: String) -> Error {
+    Error {
+        status: StatusCode::BAD_REQUEST,
+        message,
+        reason: None,
+    }
+}
+
 pub fn unauthorized(message: String) -> Error {
     Error {
         status: StatusCode::UNAUTHORIZED,
