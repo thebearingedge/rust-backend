@@ -5,8 +5,8 @@ authors = ["thebearingedge <contact@timdav.is>"]
 edition = "2018"
 
 [dependencies]
-actix = "0.7.7"
-actix-web = "0.7.14"
+actix = "0.7.8"
+actix-web = "0.7.15"
 bcrypt = "0.2.1"
 chrono = { version = "0.4.6", features = ["serde"] }
 diesel = { version = "1.3.3", features = ["postgres", "uuid", "r2d2", "chrono"] }
@@ -16,8 +16,8 @@ jsonwebtoken = "5.0.1"
 listenfd = "0.3.3"
 num_cpus = "1.8.0"
 r2d2 = "0.8.3"
-serde = "1.0.80"
-serde_derive = "1.0.80"
+serde = "1.0.81"
+serde_derive = "1.0.81"
 serde_json = "1.0.33"
 uuid = { version = "0.6.5", features = ["serde", "v4"] }
 failure = "0.1.3"
