@@ -9,9 +9,8 @@ use std::{
 #[derive(Debug, Fail)]
 pub struct Error {
     status: StatusCode,
-    error: &'static str,
-    message: &'static str,
-    cause: Option<failure::Error>,
+    message: String,
+    reason: Option<failure::Error>,
 }
 
 impl Display for Error {
@@ -27,7 +26,7 @@ impl Serialize for Error {
     {
         let mut state = serializer.serialize_struct("Error", 3)?;
         state.serialize_field("status", &self.status.as_u16())?;
-        state.serialize_field("error", &self.error)?;
+        state.serialize_field("error", &self.status.canonical_reason())?;
         state.serialize_field("message", &self.message)?;
         state.end()
     }
@@ -35,34 +34,34 @@ impl Serialize for Error {
 
 impl ResponseError for Error {
     fn error_response(&self) -> HttpResponse {
+        if let Some(err) = &self.reason {
+            eprintln!("{:?}", err);
+        }
         HttpResponse::build(self.status).json(self)
     }
 }
 
-pub fn unauthorized(message: &'static str) -> Error {
+pub fn unauthorized(message: String) -> Error {
     Error {
         status: StatusCode::UNAUTHORIZED,
-        error: "Unauthorized",
         message,
-        cause: None,
+        reason: None,
     }
 }
 
 pub fn bad_implementation(err: failure::Error) -> Error {
     Error {
-        cause: Some(err),
+        reason: Some(err),
         status: StatusCode::INTERNAL_SERVER_ERROR,
-        error: "Internal Server Error",
-        message: "An unexpected Error occurred.",
+        message: "An unexpected Error occurred.".into(),
     }
 }
 
 pub fn service_unavailable(err: failure::Error) -> Error {
     Error {
-        cause: Some(err),
+        reason: Some(err),
         status: StatusCode::SERVICE_UNAVAILABLE,
-        error: "Service Unavailable",
-        message: "The server is currently unable to handle the request.",
+        message: "The server is currently unable to handle the request.".into(),
     }
 }
 

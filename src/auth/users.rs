@@ -83,7 +83,7 @@ pub fn authenticate(conn: &PgConnection, payload: SignIn) -> AppResult<Claims> {
         .map_err(|err| error::bad_implementation(err.into()))
         .and_then(|found| {
             if found.is_none() {
-                return Err(error::unauthorized("Invalid login."));
+                return Err(error::unauthorized("Invalid login.".into()));
             }
 
             let user = found.unwrap();
@@ -92,7 +92,7 @@ pub fn authenticate(conn: &PgConnection, payload: SignIn) -> AppResult<Claims> {
             let is_valid = bcrypt::verify(unhashed, hashed).unwrap();
 
             if !is_valid {
-                return Err(error::unauthorized("Invalid login."));
+                return Err(error::unauthorized("Invalid login.".into()));
             }
             Ok(Claims {
                 user_id: user.user_id,
