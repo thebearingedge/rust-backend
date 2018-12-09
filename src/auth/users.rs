@@ -56,63 +56,61 @@ pub fn create(conn: &PgConnection, payload: SignUp) -> AppResult<CreatedUser> {
     use crate::db::functions::*;
     use crate::schema::users::dsl::*;
 
-    users
+    let found = users
         .select((user_id, email, password))
         .filter(lower(email).eq(&payload.email.to_lowercase()))
         .first::<ActiveUser>(conn)
         .optional()
+        .map_err(|err| error::bad_implementation(err.into()))?;
+
+    if !found.is_none() {
+        return Err(error::bad_request(format!(
+            "Email '{}' is already in use.",
+            payload.email
+        )));
+    }
+
+    let hashed_password =
+        bcrypt::hash(&payload.password, bcrypt::DEFAULT_COST).unwrap();
+    let new_user = NewUser {
+        name: payload.name,
+        email: payload.email,
+        password: hashed_password,
+    };
+
+    diesel::insert_into(users)
+        .values(&new_user)
+        .returning((user_id, name, email, created_at, updated_at))
+        .get_result::<CreatedUser>(conn)
         .map_err(|err| error::bad_implementation(err.into()))
-        .and_then(|found| {
-            if !found.is_none() {
-                return Err(error::bad_request(format!(
-                    "Email '{}' is already in use.",
-                    payload.email
-                )));
-            }
-
-            let hashed_password =
-                bcrypt::hash(&payload.password, bcrypt::DEFAULT_COST).unwrap();
-            let new_user = NewUser {
-                name: payload.name,
-                email: payload.email,
-                password: hashed_password,
-            };
-
-            diesel::insert_into(users)
-                .values(&new_user)
-                .returning((user_id, name, email, created_at, updated_at))
-                .get_result::<CreatedUser>(conn)
-                .map_err(|err| error::bad_implementation(err.into()))
-        })
 }
 
 pub fn authenticate(conn: &PgConnection, payload: SignIn) -> AppResult<Claims> {
     use crate::db::functions::*;
     use crate::schema::users::dsl::*;
 
-    users
+    let found = users
         .select((user_id, email, password))
         .filter(lower(email).eq(&payload.email.to_lowercase()))
         .filter(password.is_not_null())
         .first::<ActiveUser>(conn)
         .optional()
-        .map_err(|err| error::bad_implementation(err.into()))
-        .and_then(|found| {
-            if found.is_none() {
-                return Err(error::unauthorized("Invalid login.".into()));
-            }
+        .map_err(|err| error::bad_implementation(err.into()))?;
 
-            let user = found.unwrap();
-            let unhashed = &payload.password;
-            let hashed = &user.password.unwrap();
-            let is_valid = bcrypt::verify(unhashed, hashed).unwrap();
+    if found.is_none() {
+        return Err(error::unauthorized("Invalid login.".into()));
+    }
 
-            if !is_valid {
-                return Err(error::unauthorized("Invalid login.".into()));
-            }
-            Ok(Claims {
-                user_id: user.user_id,
-                email: user.email,
-            })
-        })
+    let user = found.unwrap();
+    let unhashed = &payload.password;
+    let hashed = &user.password.unwrap();
+    let is_valid = bcrypt::verify(unhashed, hashed).unwrap();
+
+    if !is_valid {
+        return Err(error::unauthorized("Invalid login.".into()));
+    }
+    Ok(Claims {
+        user_id: user.user_id,
+        email: user.email,
+    })
 }
