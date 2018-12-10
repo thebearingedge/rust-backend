@@ -59,17 +59,17 @@ pub fn unauthorized(message: String) -> Error {
 
 pub fn bad_implementation(err: failure::Error) -> Error {
     Error {
-        reason: Some(err),
         status: StatusCode::INTERNAL_SERVER_ERROR,
         message: "An unexpected Error occurred.".into(),
+        reason: Some(err),
     }
 }
 
 pub fn service_unavailable(err: failure::Error) -> Error {
     Error {
-        reason: Some(err),
         status: StatusCode::SERVICE_UNAVAILABLE,
         message: "The server is currently unable to handle the request.".into(),
+        reason: Some(err),
     }
 }
 
