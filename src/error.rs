@@ -1,9 +1,8 @@
 use actix_web::{error::Error, http::StatusCode, HttpResponse};
 use failure;
 use serde_json;
-use std::fmt::{self, Display};
 
-#[derive(Debug, Fail)]
+#[derive(Debug)]
 pub enum AppError {
     ServerError {
         err: Error,
@@ -52,12 +51,6 @@ impl AppError {
                     .json(payload)
             }
         }
-    }
-}
-
-impl Display for AppError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self)
     }
 }
 
