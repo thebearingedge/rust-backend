@@ -1,7 +1,5 @@
 use crate::app;
-use actix_web::{
-    AsyncResponder, FutureResponse, HttpResponse, Json, ResponseError, State,
-};
+use actix_web::{AsyncResponder, FutureResponse, HttpResponse, Json, State};
 use futures::future::Future;
 use jsonwebtoken as jwt;
 use std::env;
@@ -18,7 +16,7 @@ pub fn sign_up(
         .send(payload)
         .and_then(|res| match res {
             Ok(user) => Ok(HttpResponse::Created().json(user)),
-            Err(error) => Ok(error.error_response()),
+            Err(error) => Ok(error.to_response()),
         })
         .from_err()
         .responder()
@@ -51,7 +49,7 @@ pub fn sign_in(
         .send(payload)
         .and_then(|res| match res.map(create_token) {
             Ok(token) => Ok(HttpResponse::Created().json(token)),
-            Err(error) => Ok(error.error_response()),
+            Err(error) => Ok(error.to_response()),
         })
         .from_err()
         .responder()

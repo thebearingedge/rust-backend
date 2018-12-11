@@ -1,76 +1,94 @@
-use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
+use actix_web::{error::Error, http::StatusCode, HttpResponse};
 use failure;
-use serde::ser::{Serialize, SerializeStruct, Serializer};
-use std::{
-    fmt::{self, Display},
-    result,
-};
+use serde_json;
+use std::fmt::{self, Display};
 
 #[derive(Debug, Fail)]
-pub struct Error {
-    status: StatusCode,
-    message: String,
-    reason: Option<failure::Error>,
+pub enum AppError {
+    ServerError {
+        err: Error,
+        status: StatusCode,
+        message: String,
+    },
+    ClientError {
+        status: StatusCode,
+        message: String,
+    },
 }
 
-impl Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-impl Serialize for Error {
-    fn serialize<S>(&self, serializer: S) -> result::Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut state = serializer.serialize_struct("Error", 3)?;
-        state.serialize_field("status", &self.status.as_u16())?;
-        state.serialize_field("error", &self.status.canonical_reason())?;
-        state.serialize_field("message", &self.message)?;
-        state.end()
-    }
-}
-
-impl ResponseError for Error {
-    fn error_response(&self) -> HttpResponse {
-        if let Some(err) = &self.reason {
-            eprintln!("{:?}", err);
+impl AppError {
+    fn status(&self) -> &StatusCode {
+        match self {
+            AppError::ClientError { status, .. } => status,
+            AppError::ServerError { status, .. } => status,
         }
-        HttpResponse::build(self.status).json(self)
+    }
+
+    fn message(&self) -> &String {
+        match self {
+            AppError::ClientError { message, .. } => message,
+            AppError::ServerError { message, .. } => message,
+        }
+    }
+
+    fn to_json(&self) -> serde_json::Value {
+        serde_json::json!({
+            "status": self.status().as_u16(),
+            "error": self.status().canonical_reason(),
+            "message": self.message()
+        })
+    }
+
+    pub fn to_response(self) -> HttpResponse {
+        let payload = self.to_json();
+        match self {
+            AppError::ClientError { status, .. } => {
+                HttpResponse::build(status).json(payload)
+            }
+            AppError::ServerError { err, status, .. } => {
+                HttpResponse::from_error(err)
+                    .into_builder()
+                    .status(status)
+                    .json(payload)
+            }
+        }
     }
 }
 
-pub fn bad_request(message: String) -> Error {
-    Error {
+impl Display for AppError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self)
+    }
+}
+
+pub fn bad_request(message: String) -> AppError {
+    AppError::ClientError {
         status: StatusCode::BAD_REQUEST,
         message,
-        reason: None,
     }
 }
 
-pub fn unauthorized(message: String) -> Error {
-    Error {
+pub fn unauthorized(message: String) -> AppError {
+    AppError::ClientError {
         status: StatusCode::UNAUTHORIZED,
         message,
-        reason: None,
     }
 }
 
-pub fn bad_implementation(err: failure::Error) -> Error {
-    Error {
+pub fn bad_implementation(err: failure::Error) -> AppError {
+    AppError::ServerError {
+        err: Error::from(err),
         status: StatusCode::INTERNAL_SERVER_ERROR,
-        message: "An unexpected Error occurred.".into(),
-        reason: Some(err),
+        message: "An unexpected error occurred.".into(),
     }
 }
 
-pub fn service_unavailable(err: failure::Error) -> Error {
-    Error {
+pub fn service_unavailable(err: failure::Error) -> AppError {
+    AppError::ServerError {
+        err: Error::from(err),
         status: StatusCode::SERVICE_UNAVAILABLE,
         message: "The server is currently unable to handle the request.".into(),
-        reason: Some(err),
     }
 }
 
-pub type AppResult<T> = result::Result<T, Error>;
+pub type AppResult<T> = Result<T, AppError>;
