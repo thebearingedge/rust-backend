@@ -93,8 +93,7 @@ pub struct Logger;
 
 impl<S> Middleware<S> for Logger {
     fn finish(&self, _req: &HttpRequest<S>, res: &HttpResponse) -> Finished {
-        let status_code = res.status().as_u16();
-        if status_code < 500 {
+        if !res.status().is_server_error() {
             return Finished::Done;
         }
         if let Some(err) = res.error() {
