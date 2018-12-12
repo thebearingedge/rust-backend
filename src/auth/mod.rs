@@ -1,4 +1,5 @@
 use crate::app;
+use crate::error;
 use actix_web::{AsyncResponder, FutureResponse, HttpResponse, Json, State};
 use futures::future::Future;
 use jsonwebtoken as jwt;
@@ -32,12 +33,12 @@ lazy_static! {
         env::var("TOKEN_SECRET").expect("TOKEN_SECRET not set");
 }
 
-fn create_token(claims: users::Claims) -> Token {
+fn create_token(claims: users::Claims) -> error::AppResult<Token> {
     let token =
         jwt::encode(&jwt::Header::default(), &claims, &token_secret.as_ref())
-            .unwrap();
+            .map_err(|err| error::bad_implementation(err.into()))?;
 
-    Token { token }
+    Ok(Token { token })
 }
 
 pub fn sign_in(
@@ -47,7 +48,7 @@ pub fn sign_in(
     state
         .db
         .send(payload)
-        .and_then(|res| match res.map(create_token) {
+        .and_then(|res| match res.and_then(create_token) {
             Ok(token) => Ok(HttpResponse::Created().json(token)),
             Err(error) => Ok(error.to_response()),
         })

@@ -70,8 +70,8 @@ pub fn create(conn: &PgConnection, payload: SignUp) -> AppResult<CreatedUser> {
         )));
     }
 
-    let hashed_password =
-        bcrypt::hash(&payload.password, bcrypt::DEFAULT_COST).unwrap();
+    let hashed_password = bcrypt::hash(&payload.password, bcrypt::DEFAULT_COST)
+        .map_err(|err| error::bad_implementation(err.into()))?;
     let new_user = NewUser {
         name: payload.name,
         email: payload.email,
@@ -104,7 +104,8 @@ pub fn authenticate(conn: &PgConnection, payload: SignIn) -> AppResult<Claims> {
     let user = found.unwrap();
     let unhashed = &payload.password;
     let hashed = &user.password.unwrap();
-    let is_valid = bcrypt::verify(unhashed, hashed).unwrap();
+    let is_valid = bcrypt::verify(unhashed, hashed)
+        .map_err(|err| error::bad_implementation(err.into()))?;
 
     if !is_valid {
         return Err(error::unauthorized("Invalid login.".into()));
