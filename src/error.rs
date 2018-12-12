@@ -1,7 +1,7 @@
 use actix_web::{
     error::Error,
     http::StatusCode,
-    middleware::{Finished, Middleware, Response},
+    middleware::{Finished, Middleware},
     HttpRequest, HttpResponse,
 };
 use failure;
