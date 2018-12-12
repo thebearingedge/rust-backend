@@ -1,4 +1,4 @@
-use crate::{auth, db::DbActor};
+use crate::{auth, db::DbActor, error};
 use actix_web::{actix::Addr, http::Method, middleware::Logger, App};
 
 pub struct State {
@@ -6,9 +6,10 @@ pub struct State {
 }
 
 pub fn create(state: State) -> App<State> {
-    App::with_state(state).middleware(Logger::default()).scope(
-        "/auth",
-        |scope| {
+    App::with_state(state)
+        .middleware(error::Logger)
+        .middleware(Logger::default())
+        .scope("/auth", |scope| {
             scope
                 .resource("/sign-up", |resource| {
                     resource.method(Method::POST).with(auth::sign_up)
@@ -16,6 +17,5 @@ pub fn create(state: State) -> App<State> {
                 .resource("/sign-in", |resource| {
                     resource.method(Method::POST).with(auth::sign_in)
                 })
-        },
-    )
+        })
 }

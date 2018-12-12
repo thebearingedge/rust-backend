@@ -1,4 +1,9 @@
-use actix_web::{error::Error, http::StatusCode, HttpResponse};
+use actix_web::{
+    error::Error,
+    http::StatusCode,
+    middleware::{Finished, Middleware, Response},
+    HttpRequest, HttpResponse,
+};
 use failure;
 use serde_json;
 
@@ -81,6 +86,21 @@ pub fn service_unavailable(err: failure::Error) -> AppError {
         err: Error::from(err),
         status: StatusCode::SERVICE_UNAVAILABLE,
         message: "The server is currently unable to handle the request.".into(),
+    }
+}
+
+pub struct Logger;
+
+impl<S> Middleware<S> for Logger {
+    fn finish(&self, _req: &HttpRequest<S>, res: &HttpResponse) -> Finished {
+        let status_code = res.status().as_u16();
+        if status_code < 500 {
+            return Finished::Done;
+        }
+        if let Some(err) = res.error() {
+            eprintln!("{}", err.backtrace());
+        }
+        Finished::Done
     }
 }
 
