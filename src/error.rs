@@ -23,15 +23,15 @@ pub enum AppError {
 impl AppError {
     fn status(&self) -> &StatusCode {
         match self {
-            AppError::ClientError { status, .. } => status,
-            AppError::ServerError { status, .. } => status,
+            AppError::ClientError { status, .. }
+            | AppError::ServerError { status, .. } => status,
         }
     }
 
     fn message(&self) -> &String {
         match self {
-            AppError::ClientError { message, .. } => message,
-            AppError::ServerError { message, .. } => message,
+            AppError::ClientError { message, .. }
+            | AppError::ServerError { message, .. } => message,
         }
     }
 
