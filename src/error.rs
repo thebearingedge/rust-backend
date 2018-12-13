@@ -43,7 +43,7 @@ impl AppError {
         })
     }
 
-    pub fn to_response(self) -> HttpResponse {
+    pub fn into_response(self) -> HttpResponse {
         let payload = self.to_json();
         match self {
             AppError::ClientError { status, .. } => {

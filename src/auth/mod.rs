@@ -17,7 +17,7 @@ pub fn sign_up(
         .send(payload)
         .and_then(|res| match res {
             Ok(user) => Ok(HttpResponse::Created().json(user)),
-            Err(error) => Ok(error.to_response()),
+            Err(error) => Ok(error.into_response()),
         })
         .from_err()
         .responder()
@@ -50,7 +50,7 @@ pub fn sign_in(
         .send(payload)
         .and_then(|res| match res.and_then(create_token) {
             Ok(token) => Ok(HttpResponse::Created().json(token)),
-            Err(error) => Ok(error.to_response()),
+            Err(error) => Ok(error.into_response()),
         })
         .from_err()
         .responder()
