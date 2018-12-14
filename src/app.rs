@@ -10,14 +10,8 @@ pub fn create(state: State) -> App<State> {
         .middleware(Logger::default())
         .scope("/auth", |scope| {
             scope
-                .resource("/sign-up", |resource| {
-                    resource.post().with(auth::sign_up)
-                })
-                .resource("/sign-in", |resource| {
-                    resource.post().with(auth::sign_in)
-                })
+                .resource("/sign-up", |r| r.post().with(auth::sign_up))
+                .resource("/sign-in", |r| r.post().with(auth::sign_in))
         })
-        .default_resource(|resource| {
-            resource.route().f(error::not_found_handler)
-        })
+        .default_resource(|r| r.route().f(error::not_found_handler))
 }
