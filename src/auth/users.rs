@@ -1,7 +1,5 @@
-use crate::{
-    error::{self, AppResult},
-    schema::users,
-};
+use crate::{error, schema::users};
+use actix_web::error::Result;
 use bcrypt;
 use chrono::{offset::Utc, DateTime};
 use diesel::{pg::PgConnection, prelude::*};
@@ -52,7 +50,7 @@ pub struct SignUp {
     pub password: String,
 }
 
-pub fn create(conn: &PgConnection, payload: SignUp) -> AppResult<CreatedUser> {
+pub fn create(conn: &PgConnection, payload: SignUp) -> Result<CreatedUser> {
     use crate::db::functions::*;
     use crate::schema::users::dsl::*;
 
@@ -85,7 +83,7 @@ pub fn create(conn: &PgConnection, payload: SignUp) -> AppResult<CreatedUser> {
         .map_err(|err| error::bad_implementation(err.into()))
 }
 
-pub fn authenticate(conn: &PgConnection, payload: SignIn) -> AppResult<Claims> {
+pub fn authenticate(conn: &PgConnection, payload: SignIn) -> Result<Claims> {
     use crate::db::functions::*;
     use crate::schema::users::dsl::*;
 

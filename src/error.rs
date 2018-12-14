@@ -1,106 +1,66 @@
+use crate::app;
 use actix_web::{
-    error::Error,
+    error::{Error, InternalError, Result},
     http::StatusCode,
-    middleware::{Finished, Middleware},
     HttpRequest, HttpResponse,
 };
 use failure;
-use serde_json;
 
-#[derive(Debug)]
-pub enum AppError {
-    ServerError {
-        err: Error,
-        status: StatusCode,
-        message: String,
-    },
-    ClientError {
-        status: StatusCode,
-        message: String,
-    },
+#[derive(Serialize)]
+struct JsonResponse {
+    status: u16,
+    error: String,
+    message: String,
 }
 
-impl AppError {
-    fn status(&self) -> &StatusCode {
-        match self {
-            AppError::ClientError { status, .. }
-            | AppError::ServerError { status, .. } => status,
-        }
-    }
-
-    fn message(&self) -> &String {
-        match self {
-            AppError::ClientError { message, .. }
-            | AppError::ServerError { message, .. } => message,
-        }
-    }
-
-    fn to_json(&self) -> serde_json::Value {
-        serde_json::json!({
-            "status": self.status().as_u16(),
-            "error": self.status().canonical_reason(),
-            "message": self.message()
+impl JsonResponse {
+    fn with_message(status: StatusCode, message: String) -> HttpResponse {
+        HttpResponse::build(status).json(JsonResponse {
+            message,
+            status: status.as_u16(),
+            error: status.canonical_reason().unwrap().into(),
         })
     }
-
-    pub fn into_response(self) -> HttpResponse {
-        let payload = self.to_json();
-        match self {
-            AppError::ClientError { status, .. } => {
-                HttpResponse::build(status).json(payload)
-            }
-            AppError::ServerError { err, status, .. } => {
-                HttpResponse::from_error(err)
-                    .into_builder()
-                    .status(status)
-                    .json(payload)
-            }
-        }
-    }
 }
 
-pub fn bad_request(message: String) -> AppError {
-    AppError::ClientError {
-        status: StatusCode::BAD_REQUEST,
-        message,
-    }
+pub fn bad_request(message: String) -> Error {
+    let status = StatusCode::BAD_REQUEST;
+    let response = JsonResponse::with_message(status, message.clone());
+    InternalError::from_response(message, response).into()
 }
 
-pub fn unauthorized(message: String) -> AppError {
-    AppError::ClientError {
-        status: StatusCode::UNAUTHORIZED,
-        message,
-    }
+pub fn unauthorized(message: String) -> Error {
+    let status = StatusCode::UNAUTHORIZED;
+    let response = JsonResponse::with_message(status, message.clone());
+    InternalError::from_response(message, response).into()
 }
 
-pub fn bad_implementation(err: failure::Error) -> AppError {
-    AppError::ServerError {
-        err: Error::from(err),
-        status: StatusCode::INTERNAL_SERVER_ERROR,
-        message: "An unexpected error occurred.".into(),
-    }
+pub fn not_found(message: String) -> Error {
+    let status = StatusCode::NOT_FOUND;
+    let response = JsonResponse::with_message(status, message.clone());
+    InternalError::from_response(message, response).into()
 }
 
-pub fn service_unavailable(err: failure::Error) -> AppError {
-    AppError::ServerError {
-        err: Error::from(err),
-        status: StatusCode::SERVICE_UNAVAILABLE,
-        message: "The server is currently unable to handle the request.".into(),
-    }
+pub fn bad_implementation(err: failure::Error) -> Error {
+    let status = StatusCode::INTERNAL_SERVER_ERROR;
+    let response = JsonResponse::with_message(
+        status,
+        "An unexpected error occurred.".into(),
+    );
+    InternalError::from_response(err, response).into()
 }
 
-pub struct Logger;
-
-impl<S> Middleware<S> for Logger {
-    fn finish(&self, _req: &HttpRequest<S>, res: &HttpResponse) -> Finished {
-        if !res.status().is_server_error() {
-            return Finished::Done;
-        }
-        if let Some(err) = res.error() {
-            eprintln!("{}", err.backtrace());
-        }
-        Finished::Done
-    }
+pub fn service_unavailable(err: failure::Error) -> Error {
+    let status = StatusCode::SERVICE_UNAVAILABLE;
+    let response = JsonResponse::with_message(
+        status,
+        "The server is currently unable to handle the request.".into(),
+    );
+    InternalError::from_response(err, response).into()
 }
 
-pub type AppResult<T> = Result<T, AppError>;
+pub fn not_found_handler(
+    req: &HttpRequest<app::State>,
+) -> Result<&'static str> {
+    Err(not_found(format!("Cannot {} {}", req.method(), req.path())))
+}

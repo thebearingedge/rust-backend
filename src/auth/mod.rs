@@ -1,6 +1,8 @@
 use crate::app;
 use crate::error;
-use actix_web::{AsyncResponder, FutureResponse, HttpResponse, Json, State};
+use actix_web::{
+    error::Result, AsyncResponder, FutureResponse, HttpResponse, Json, State,
+};
 use futures::future::Future;
 use jsonwebtoken as jwt;
 use std::env;
@@ -17,7 +19,7 @@ pub fn sign_up(
         .send(payload)
         .and_then(|res| match res {
             Ok(user) => Ok(HttpResponse::Created().json(user)),
-            Err(error) => Ok(error.into_response()),
+            Err(err) => Ok(err.into()),
         })
         .from_err()
         .responder()
@@ -33,7 +35,7 @@ lazy_static! {
         env::var("TOKEN_SECRET").expect("TOKEN_SECRET not set");
 }
 
-fn create_token(claims: users::Claims) -> error::AppResult<Token> {
+fn create_token(claims: users::Claims) -> Result<Token> {
     let token =
         jwt::encode(&jwt::Header::default(), &claims, &token_secret.as_ref())
             .map_err(|err| error::bad_implementation(err.into()))?;
@@ -50,7 +52,7 @@ pub fn sign_in(
         .send(payload)
         .and_then(|res| match res.and_then(create_token) {
             Ok(token) => Ok(HttpResponse::Created().json(token)),
-            Err(error) => Ok(error.into_response()),
+            Err(err) => Ok(err.into()),
         })
         .from_err()
         .responder()

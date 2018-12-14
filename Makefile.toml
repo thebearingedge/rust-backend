@@ -1,6 +1,6 @@
 [tasks.watch]
 script = [
-    "source .env; RUST_BACKTRACE=1 systemfd --no-pid -s http::${PORT} -- cargo watch -x run"
+    "source .env; systemfd --no-pid -s http::${PORT} -- cargo watch -x run"
 ]
 
 [tasks.db-start]

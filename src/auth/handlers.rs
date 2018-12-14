@@ -1,16 +1,16 @@
 use super::users;
-use crate::{
-    db::DbActor,
-    error::{self, AppResult},
+use crate::{db::DbActor, error};
+use actix_web::{
+    actix::{Handler, Message},
+    error::Result,
 };
-use actix_web::actix::{Handler, Message};
 
 impl Message for users::SignUp {
-    type Result = AppResult<users::CreatedUser>;
+    type Result = Result<users::CreatedUser>;
 }
 
 impl Handler<users::SignUp> for DbActor {
-    type Result = AppResult<users::CreatedUser>;
+    type Result = Result<users::CreatedUser>;
 
     fn handle(
         &mut self,
@@ -25,11 +25,11 @@ impl Handler<users::SignUp> for DbActor {
 }
 
 impl Message for users::SignIn {
-    type Result = AppResult<users::Claims>;
+    type Result = Result<users::Claims>;
 }
 
 impl Handler<users::SignIn> for DbActor {
-    type Result = AppResult<users::Claims>;
+    type Result = Result<users::Claims>;
 
     fn handle(
         &mut self,
