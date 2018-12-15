@@ -63,7 +63,7 @@ fn bad_implementation(res: HttpResponse) -> HttpResponse {
     let status = res.status();
     res.into_builder().json(JsonResponse {
         status: status.as_u16(),
-        error: status.canonical_reason().unwrap().to_owned(),
+        error: status.canonical_reason().unwrap().into(),
         message: String::from("An unexpected error occurred."),
     })
 }
