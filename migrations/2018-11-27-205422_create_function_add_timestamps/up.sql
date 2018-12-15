@@ -33,7 +33,7 @@ create function util.add_timestamps(table_name regclass) returns void as $$
         before update
         on %I
         for each row
-        when (new *<> old)
+        when (new *<> old and new.updated_at = old.updated_at)
         execute procedure util.set_updated_at()
     ', table_name);
   end;
