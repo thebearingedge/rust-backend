@@ -52,7 +52,7 @@ pub fn service_unavailable(err: failure::Error) -> Error {
         .into()
 }
 
-fn not_found(message: String) -> Error {
+pub fn not_found(message: String) -> Error {
     let status = StatusCode::NOT_FOUND;
     let response = JsonBody::response(status, message.clone());
     InternalError::from_response(format!("{} - {}", status, message), response)
@@ -73,16 +73,12 @@ pub struct ErrorHandler;
 impl<S> Middleware<S> for ErrorHandler {
     fn response(
         &self,
-        req: &HttpRequest<S>,
+        _req: &HttpRequest<S>,
         res: HttpResponse,
     ) -> Result<Response> {
         match res.status() {
             StatusCode::INTERNAL_SERVER_ERROR => {
                 Ok(Response::Done(bad_implementation(res)))
-            }
-            StatusCode::NOT_FOUND => {
-                let message = format!("Cannot {} {}", req.method(), req.path());
-                Ok(Response::Done(not_found(message).into()))
             }
             _ => Ok(Response::Done(res)),
         }
