@@ -26,6 +26,7 @@ impl JsonBody {
 pub fn bad_request(message: String) -> Error {
     let status = StatusCode::BAD_REQUEST;
     let response = JsonBody::response(status, message.clone());
+
     InternalError::from_response(format!("{} - {}", status, message), response)
         .into()
 }
@@ -33,12 +34,14 @@ pub fn bad_request(message: String) -> Error {
 pub fn unauthorized(message: String) -> Error {
     let status = StatusCode::UNAUTHORIZED;
     let response = JsonBody::response(status, message.clone());
+
     InternalError::from_response(format!("{} - {}", status, message), response)
         .into()
 }
 
 pub fn internal_server_error(err: failure::Error) -> Error {
     let status = StatusCode::INTERNAL_SERVER_ERROR;
+
     InternalError::new(err, status).into()
 }
 
@@ -48,6 +51,7 @@ pub fn service_unavailable(err: failure::Error) -> Error {
         status,
         "The server is currently unable to handle the request.".into(),
     );
+
     InternalError::from_response(format!("{} - {}", status, err), response)
         .into()
 }
@@ -55,12 +59,14 @@ pub fn service_unavailable(err: failure::Error) -> Error {
 pub fn not_found(message: String) -> Error {
     let status = StatusCode::NOT_FOUND;
     let response = JsonBody::response(status, message.clone());
+
     InternalError::from_response(format!("{} - {}", status, message), response)
         .into()
 }
 
 fn bad_implementation(res: HttpResponse) -> HttpResponse {
     let status = res.status();
+
     res.into_builder().json(JsonBody {
         status: status.as_u16(),
         error: status.canonical_reason().unwrap().into(),

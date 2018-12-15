@@ -61,7 +61,7 @@ pub fn create(conn: &PgConnection, payload: SignUp) -> Result<CreatedUser> {
         .optional()
         .map_err(|err| error::internal_server_error(err.into()))?;
 
-    if !found.is_none() {
+    if found.is_some() {
         return Err(error::bad_request(format!(
             "Email '{}' is already in use.",
             payload.email
@@ -108,6 +108,7 @@ pub fn authenticate(conn: &PgConnection, payload: SignIn) -> Result<Claims> {
     if !is_valid {
         return Err(error::unauthorized("Invalid login.".into()));
     }
+
     Ok(Claims {
         user_id: user.user_id,
         email: user.email,
