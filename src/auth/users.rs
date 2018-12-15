@@ -24,7 +24,7 @@ pub struct NewUser {
 }
 
 #[derive(Queryable)]
-pub struct ActiveUser {
+pub struct FoundUser {
     pub user_id: Uuid,
     pub email: String,
     pub password: Option<String>,
@@ -57,7 +57,7 @@ pub fn create(conn: &PgConnection, payload: SignUp) -> Result<CreatedUser> {
     let found = users
         .select((user_id, email, password))
         .filter(lower(email).eq(&payload.email.to_lowercase()))
-        .first::<ActiveUser>(conn)
+        .first::<FoundUser>(conn)
         .optional()
         .map_err(|err| error::internal_server_error(err.into()))?;
 
@@ -91,7 +91,7 @@ pub fn authenticate(conn: &PgConnection, payload: SignIn) -> Result<Claims> {
         .select((user_id, email, password))
         .filter(lower(email).eq(&payload.email.to_lowercase()))
         .filter(password.is_not_null())
-        .first::<ActiveUser>(conn)
+        .first::<FoundUser>(conn)
         .optional()
         .map_err(|err| error::internal_server_error(err.into()))?;
 
