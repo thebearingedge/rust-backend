@@ -7,11 +7,11 @@ pub struct State {
 
 pub fn create(state: State) -> App<State> {
     App::with_state(state)
+        .middleware(error::ErrorHandler)
         .middleware(Logger::default())
         .scope("/auth", |scope| {
             scope
                 .resource("/sign-up", |r| r.post().with(auth::sign_up))
                 .resource("/sign-in", |r| r.post().with(auth::sign_in))
         })
-        .default_resource(|r| r.route().f(error::not_found_handler))
 }

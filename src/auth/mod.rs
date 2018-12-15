@@ -38,7 +38,7 @@ lazy_static! {
 fn create_token(claims: users::Claims) -> Result<Token> {
     let token =
         jwt::encode(&jwt::Header::default(), &claims, &token_secret.as_ref())
-            .map_err(|err| error::bad_implementation(err.into()))?;
+            .map_err(|err| error::internal_server_error(err.into()))?;
 
     Ok(Token { token })
 }
