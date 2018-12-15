@@ -7,15 +7,15 @@ use actix_web::{
 use failure;
 
 #[derive(Serialize)]
-struct JsonResponse {
+struct JsonBody {
     status: u16,
     error: String,
     message: String,
 }
 
-impl JsonResponse {
-    fn with_message(status: StatusCode, message: String) -> HttpResponse {
-        HttpResponse::build(status).json(JsonResponse {
+impl JsonBody {
+    fn response(status: StatusCode, message: String) -> HttpResponse {
+        HttpResponse::build(status).json(JsonBody {
             message,
             status: status.as_u16(),
             error: status.canonical_reason().unwrap().into(),
@@ -25,14 +25,14 @@ impl JsonResponse {
 
 pub fn bad_request(message: String) -> Error {
     let status = StatusCode::BAD_REQUEST;
-    let response = JsonResponse::with_message(status, message.clone());
+    let response = JsonBody::response(status, message.clone());
     InternalError::from_response(format!("{} - {}", status, message), response)
         .into()
 }
 
 pub fn unauthorized(message: String) -> Error {
     let status = StatusCode::UNAUTHORIZED;
-    let response = JsonResponse::with_message(status, message.clone());
+    let response = JsonBody::response(status, message.clone());
     InternalError::from_response(format!("{} - {}", status, message), response)
         .into()
 }
@@ -44,7 +44,7 @@ pub fn internal_server_error(err: failure::Error) -> Error {
 
 pub fn service_unavailable(err: failure::Error) -> Error {
     let status = StatusCode::SERVICE_UNAVAILABLE;
-    let response = JsonResponse::with_message(
+    let response = JsonBody::response(
         status,
         "The server is currently unable to handle the request.".into(),
     );
@@ -54,14 +54,14 @@ pub fn service_unavailable(err: failure::Error) -> Error {
 
 fn not_found(message: String) -> Error {
     let status = StatusCode::NOT_FOUND;
-    let response = JsonResponse::with_message(status, message.clone());
+    let response = JsonBody::response(status, message.clone());
     InternalError::from_response(format!("{} - {}", status, message), response)
         .into()
 }
 
 fn bad_implementation(res: HttpResponse) -> HttpResponse {
     let status = res.status();
-    res.into_builder().json(JsonResponse {
+    res.into_builder().json(JsonBody {
         status: status.as_u16(),
         error: status.canonical_reason().unwrap().into(),
         message: String::from("An unexpected error occurred."),
