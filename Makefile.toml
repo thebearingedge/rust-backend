@@ -13,11 +13,6 @@ script = [
     "docker-compose down"
 ]
 
-[tasks.db-init]
-script = [
-    "diesel setup"
-]
-
 [tasks.db-make]
 script = [
     "diesel migration generate ${@}"
@@ -41,11 +36,6 @@ script = [
 [tasks.db-reset]
 script = [
     "diesel database reset"
-]
-
-[tasks.db-schema]
-script = [
-    "diesel print-schema"
 ]
 
 [tasks.db-shell]
