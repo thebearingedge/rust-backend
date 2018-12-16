@@ -35,7 +35,7 @@ script = [
 
 [tasks.db-reset]
 script = [
-    "diesel database reset && rm -rf migrations/*diesel_initial*"
+    "diesel database reset"
 ]
 
 [tasks.db-shell]
