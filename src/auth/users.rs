@@ -59,7 +59,7 @@ pub fn create(conn: &PgConnection, payload: SignUp) -> Result<CreatedUser> {
         .filter(lower(email).eq(&payload.email.to_lowercase()))
         .first::<FoundUser>(conn)
         .optional()
-        .map_err(|err| error::internal_server_error(err.into()))?;
+        .map_err(error::internal_server_error)?;
 
     if found.is_some() {
         return Err(error::bad_request(format!(
@@ -69,7 +69,7 @@ pub fn create(conn: &PgConnection, payload: SignUp) -> Result<CreatedUser> {
     }
 
     let hashed_password = bcrypt::hash(&payload.password, bcrypt::DEFAULT_COST)
-        .map_err(|err| error::internal_server_error(err.into()))?;
+        .map_err(error::internal_server_error)?;
     let new_user = NewUser {
         name: payload.name,
         email: payload.email,
@@ -80,7 +80,7 @@ pub fn create(conn: &PgConnection, payload: SignUp) -> Result<CreatedUser> {
         .values(&new_user)
         .returning((user_id, name, email, created_at, updated_at))
         .get_result::<CreatedUser>(conn)
-        .map_err(|err| error::internal_server_error(err.into()))
+        .map_err(error::internal_server_error)
 }
 
 pub fn authenticate(conn: &PgConnection, payload: SignIn) -> Result<Claims> {
@@ -93,7 +93,7 @@ pub fn authenticate(conn: &PgConnection, payload: SignIn) -> Result<Claims> {
         .filter(password.is_not_null())
         .first::<FoundUser>(conn)
         .optional()
-        .map_err(|err| error::internal_server_error(err.into()))?;
+        .map_err(error::internal_server_error)?;
 
     if found.is_none() {
         return Err(error::unauthorized("Invalid login.".into()));
@@ -103,7 +103,7 @@ pub fn authenticate(conn: &PgConnection, payload: SignIn) -> Result<Claims> {
     let unhashed = &payload.password;
     let hashed = &user.password.unwrap();
     let is_valid = bcrypt::verify(unhashed, hashed)
-        .map_err(|err| error::internal_server_error(err.into()))?;
+        .map_err(error::internal_server_error)?;
 
     if !is_valid {
         return Err(error::unauthorized("Invalid login.".into()));

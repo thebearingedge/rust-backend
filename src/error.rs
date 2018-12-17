@@ -7,25 +7,25 @@ use actix_web::{
 use failure;
 
 #[derive(Serialize)]
-struct JsonBody {
+pub struct ErrorBody<'a> {
     status: u16,
-    error: String,
-    message: String,
+    error: &'a str,
+    message: &'a str,
 }
 
-impl JsonBody {
-    fn response(status: StatusCode, message: String) -> HttpResponse {
-        HttpResponse::build(status).json(JsonBody {
+impl<'a> ErrorBody<'a> {
+    fn response(status: StatusCode, message: &str) -> HttpResponse {
+        HttpResponse::build(status).json(ErrorBody {
             message,
             status: status.as_u16(),
-            error: status.canonical_reason().unwrap().into(),
+            error: status.canonical_reason().unwrap(),
         })
     }
 }
 
 pub fn bad_request(message: String) -> Error {
     let status = StatusCode::BAD_REQUEST;
-    let response = JsonBody::response(status, message.clone());
+    let response = ErrorBody::response(status, &message);
 
     InternalError::from_response(format!("{} - {}", status, message), response)
         .into()
@@ -33,32 +33,35 @@ pub fn bad_request(message: String) -> Error {
 
 pub fn unauthorized(message: String) -> Error {
     let status = StatusCode::UNAUTHORIZED;
-    let response = JsonBody::response(status, message.clone());
+    let response = ErrorBody::response(status, &message);
 
     InternalError::from_response(format!("{} - {}", status, message), response)
         .into()
 }
 
-pub fn internal_server_error(err: failure::Error) -> Error {
+pub fn internal_server_error<E: Into<failure::Error>>(err: E) -> Error {
     let status = StatusCode::INTERNAL_SERVER_ERROR;
 
-    InternalError::new(err, status).into()
+    InternalError::new(err.into(), status).into()
 }
 
-pub fn service_unavailable(err: failure::Error) -> Error {
+pub fn service_unavailable<E: Into<failure::Error>>(err: E) -> Error {
     let status = StatusCode::SERVICE_UNAVAILABLE;
-    let response = JsonBody::response(
+    let response = ErrorBody::response(
         status,
-        "The server is currently unable to handle the request.".into(),
+        "The server is currently unable to handle the request.",
     );
 
-    InternalError::from_response(format!("{} - {}", status, err), response)
-        .into()
+    InternalError::from_response(
+        format!("{} - {}", status, err.into()),
+        response,
+    )
+    .into()
 }
 
 pub fn not_found(message: String) -> Error {
     let status = StatusCode::NOT_FOUND;
-    let response = JsonBody::response(status, message.clone());
+    let response = ErrorBody::response(status, &message);
 
     InternalError::from_response(format!("{} - {}", status, message), response)
         .into()
@@ -67,10 +70,10 @@ pub fn not_found(message: String) -> Error {
 fn bad_implementation(res: HttpResponse) -> HttpResponse {
     let status = res.status();
 
-    res.into_builder().json(JsonBody {
+    res.into_builder().json(ErrorBody {
         status: status.as_u16(),
         error: status.canonical_reason().unwrap().into(),
-        message: String::from("An unexpected error occurred."),
+        message: "An unexpected error occurred.",
     })
 }
 
